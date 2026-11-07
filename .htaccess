@@ -1,0 +1,31 @@
+# The Pizza Factory & More: one canonical address, https://thepizzafactoryandmore.com
+# www goes to the bare domain; other redirects keep the current host so preview addresses stay put.
+RewriteEngine On
+RewriteCond %{HTTP_HOST} ^www\.thepizzafactoryandmore\.com$ [NC]
+RewriteRule ^(.*)$ https://thepizzafactoryandmore.com/$1 [R=301,L]
+RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+
+# Clean page addresses: /index.html goes to /, and /menu.html goes to /menu
+RewriteCond %{THE_REQUEST} \s/+index\.html[\s?] [NC]
+RewriteRule ^index\.html$ https://%{HTTP_HOST}/ [R=301,L]
+RewriteCond %{THE_REQUEST} \s/+([^\s?]+)\.html[\s?] [NC]
+RewriteRule ^ https://%{HTTP_HOST}/%1 [R=301,L]
+
+# Serve /menu from menu.html
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{DOCUMENT_ROOT}/$1.html -f
+RewriteRule ^([^/.]+)$ $1.html [L]
+
+DirectoryIndex index.html
+
+# Cache images, styles and scripts for a week
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/jpeg "access plus 7 days"
+  ExpiresByType image/png "access plus 7 days"
+  ExpiresByType text/css "access plus 7 days"
+  ExpiresByType application/javascript "access plus 7 days"
+</IfModule>

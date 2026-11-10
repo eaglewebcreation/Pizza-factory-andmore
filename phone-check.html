@@ -1,3 +1,7 @@
 <!doctype html><meta charset="utf-8"><meta name="robots" content="noindex"><title>check</title>
 <style>body{margin:0;display:flex;gap:20px;padding:10px;background:#ccc}iframe{width:390px;height:780px;border:0;background:#fff}</style>
-<iframe src="/menu?pc=1"></iframe><iframe src="/menu?pc=2#menu-specialty"></iframe>
+<iframe id="a" src="/menu?pc=3"></iframe><iframe id="b" src="/menu?pc=4"></iframe>
+<script>
+function go(id, sel, off){var f=document.getElementById(id);f.addEventListener("load",function(){setTimeout(function(){var d=f.contentDocument,e=d.querySelector(sel);f.contentWindow.scrollTo(0,e.getBoundingClientRect().top+f.contentWindow.scrollY-off);},800);});}
+go("a",".cards",60);go("b","#menu-salads",0);
+</script>

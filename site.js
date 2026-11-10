@@ -1,4 +1,4 @@
-/* The Pizza Factory & More: open-now status, the online ordering switch, today's pick, the reviews carousel and the photo slider */
+/* The Pizza Factory & More: open-now status, the online ordering switch, today's pick and the reviews carousel */
 (function () {
   // Paste the online ordering link here once it's set up (for example the Square Online ordering page).
   // Every "Order online" button then goes straight to it.
@@ -158,55 +158,6 @@
     if ("IntersectionObserver" in window) new IntersectionObserver(function (es) { seen = es[0].isIntersecting; }).observe(box);
     paintPause();
     go(0, false);
-    restart();
-  });
-
-  // Food photo slider: the row swipes and scrolls on its own; this adds arrows and, unless reduced motion is on,
-  // a slow auto-advance that pauses on hover, focus or touch and has its own pause button.
-  document.querySelectorAll("[data-slider]").forEach(function (box) {
-    var track = box.querySelector(".slider-track");
-    if (!track || track.children.length < 2) return;
-    var timer = null, hold = 0, stopped = reduce, seen = true;
-    var controls = document.createElement("div"); controls.className = "carousel-controls";
-    var prev = document.createElement("button"); prev.type = "button"; prev.className = "carousel-btn"; prev.setAttribute("aria-label", "Previous photos"); prev.innerHTML = arrow("M15 18l-6-6 6-6");
-    var next = document.createElement("button"); next.type = "button"; next.className = "carousel-btn"; next.setAttribute("aria-label", "Next photos"); next.innerHTML = arrow("M9 18l6-6-6-6");
-    controls.appendChild(prev); controls.appendChild(next);
-    var pause = null;
-    if (!reduce) {
-      pause = document.createElement("button"); pause.type = "button"; pause.className = "carousel-btn carousel-pause";
-      controls.appendChild(pause);
-    }
-    box.appendChild(controls);
-
-    function step() { var li = track.children[0]; return li.getBoundingClientRect().width + parseFloat(getComputedStyle(track).columnGap || 16); }
-    function atEnd() { return track.scrollLeft + track.clientWidth >= track.scrollWidth - 4; }
-    function move(dir) {
-      if (dir > 0 && atEnd()) track.scrollTo({ left: 0, behavior: reduce ? "auto" : "smooth" });
-      else if (dir < 0 && track.scrollLeft <= 4) track.scrollTo({ left: track.scrollWidth, behavior: reduce ? "auto" : "smooth" });
-      else track.scrollBy({ left: dir * step(), behavior: reduce ? "auto" : "smooth" });
-    }
-    function paintPause() {
-      if (!pause) return;
-      pause.setAttribute("aria-label", stopped ? "Play photos" : "Pause photos");
-      pause.innerHTML = stopped ? arrow("M8 5l11 7-11 7z") : arrow("M9 5v14M15 5v14");
-    }
-    function tick() { if (!hold && !stopped && seen && !document.hidden) move(1); }
-    function restart() { clearInterval(timer); if (!reduce) timer = setInterval(tick, 4000); }
-
-    prev.addEventListener("click", function () { move(-1); restart(); });
-    next.addEventListener("click", function () { move(1); restart(); });
-    if (pause) pause.addEventListener("click", function () { stopped = !stopped; paintPause(); restart(); });
-    box.addEventListener("mouseenter", function () { hold++; });
-    box.addEventListener("mouseleave", function () { hold = Math.max(0, hold - 1); restart(); });
-    box.addEventListener("focusin", function () { if (!box.dataset.focus) { hold++; box.dataset.focus = "1"; } });
-    box.addEventListener("focusout", function (e) {
-      if (!box.contains(e.relatedTarget) && box.dataset.focus) { hold = Math.max(0, hold - 1); delete box.dataset.focus; restart(); }
-    });
-    track.addEventListener("touchstart", function () { hold++; }, { passive: true });
-    track.addEventListener("touchend", function () { hold = Math.max(0, hold - 1); restart(); }, { passive: true });
-    track.addEventListener("touchcancel", function () { hold = Math.max(0, hold - 1); }, { passive: true });
-    if ("IntersectionObserver" in window) new IntersectionObserver(function (es) { seen = es[0].isIntersecting; }).observe(box);
-    paintPause();
     restart();
   });
 

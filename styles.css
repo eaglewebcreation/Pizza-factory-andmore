@@ -354,17 +354,6 @@ body::before {
   .pick .btn { grid-column: 1 / -1; justify-self: start; }
 }
 
-/* Food photo slider: swipeable row, arrows and gentle auto-advance added by site.js */
-.slider { position: relative; }
-.slider-track { display: grid; grid-auto-flow: column; grid-auto-columns: calc((100% - 3 * 16px) / 4); gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; scrollbar-width: none; padding: 4px 4px 12px; margin: 0; list-style: none; }
-.slider-track::-webkit-scrollbar { display: none; }
-.slider-track li { scroll-snap-align: start; margin: 0; }
-.slider-track figure { margin: 0; }
-.slider-track img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--radius); border: 2px solid var(--ink); background: var(--flour); }
-.slider-track figcaption { font-size: .9rem; color: var(--ink-soft); margin-top: 8px; }
-@media (max-width: 860px) { .slider-track { grid-auto-columns: calc((100% - 2 * 16px) / 3); } }
-@media (max-width: 560px) { .slider-track { grid-auto-columns: 72%; gap: 12px; } }
-
 /* Shared carousel controls */
 .carousel-controls { display: flex; align-items: center; gap: 14px; margin-top: 18px; }
 .carousel-btn { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--ink); background: var(--paper); color: var(--ink); display: grid; place-items: center; cursor: pointer; padding: 0; flex: none; }
@@ -403,6 +392,5 @@ body::before {
   body { padding-bottom: calc(74px + env(safe-area-inset-bottom, 0px)); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .slider-track { scroll-behavior: auto; }
   .carousel-track .quote { transition: none; }
 }

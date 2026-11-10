@@ -1,4 +1,4 @@
-/* The Pizza Factory & More: open-now status and the online ordering switch */
+/* The Pizza Factory & More: open-now status, the online ordering switch, today's pick, the reviews carousel and the photo slider */
 (function () {
   // Paste the online ordering link here once it's set up (for example the Square Online ordering page).
   // Every "Order online" button then goes straight to it.
@@ -51,6 +51,164 @@
     document.querySelectorAll("[data-order-live]").forEach(function (el) { el.hidden = false; });
     document.querySelectorAll("[data-order-soon]").forEach(function (el) { el.hidden = true; });
   }
+
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var arrow = function (d) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + d + '"/></svg>'; };
+
+  // Today's pick: one menu item per weekday, shop time. Names, prices and photos all come from the menu.
+  // Sunday the shop is closed, so it shows Monday's pick as tomorrow's.
+  var PICKS = {
+    1: { name: "The Monster", price: "From $15.49", img: "monster", alt: "The Monster", link: "#menu-ultimate", desc: "The local favorite, loaded with everything but the kitchen sink." },
+    2: { name: "Green Chile, Chicken & Cheese Rolled Tacos", price: "$6.99", img: "rolled-tacos", alt: "Green chile, chicken and cheese rolled tacos", link: "#menu-extras", desc: "Served with your choice of dipping sauce." },
+    3: { name: "Wings", price: "From $10.99", img: "garlic-parmesan-wings", alt: "Wings in homemade garlic parmesan", link: "#menu-wings", desc: "Bone-in or boneless, tossed in one of 11 sauces, including our homemade garlic parmesan." },
+    4: { name: "Chef Salad", price: "Small $8.99 · Large $13.49", img: "chef-salad", alt: "Chef salad with homemade ranch", link: "#menu-salads", desc: "Crisp greens with sliced turkey and ham, shredded cheddar, fresh tomatoes and cucumbers." },
+    5: { name: "Factory Fries", price: "$11.49", img: "factory-fries", alt: "Factory Fries", link: "#menu-extras", desc: "A pound of fries smothered in homemade garlic parmesan with a habanero drizzle." },
+    6: { name: "Funnel Cake Fries", price: "$5.99", img: "funnel-cake-fries", alt: "Funnel cake fries", link: "#menu-sweets", desc: "A sweet finish, made right here." }
+  };
+  var pickBox = document.querySelector("[data-pick]");
+  if (pickBox && now) {
+    var tomorrow = now.day === 0, p = PICKS[tomorrow ? 1 : now.day];
+    var set = function (sel, fn) { var el = pickBox.querySelector(sel); if (el) fn(el); };
+    set("[data-pick-label]", function (el) { el.textContent = (tomorrow ? "Tomorrow's pick · " + DAY[1] : "Today's pick · " + DAY[now.day]); });
+    set("[data-pick-name]", function (el) { el.textContent = p.name; });
+    set("[data-pick-desc]", function (el) { el.textContent = p.desc; });
+    set("[data-pick-price]", function (el) { el.textContent = p.price; });
+    set("[data-pick-img]", function (el) { el.src = "/images/" + p.img + ".jpg"; el.alt = p.alt; });
+    set("[data-pick-link]", function (el) { el.href = "/menu" + p.link; });
+  }
+
+  // Reviews carousel: current review front and center, previous and next set back to the sides. Rotates every 6 seconds,
+  // pauses on hover, focus or touch, swipes on phones. People who ask for reduced motion keep the plain grid.
+  document.querySelectorAll("[data-carousel]").forEach(function (box) {
+    var slides = Array.prototype.slice.call(box.querySelectorAll(".quote"));
+    if (reduce || slides.length < 2) return;
+    var DELAY = 6000, i = 0, timer = null, hold = 0, stopped = false, seen = true;
+
+    var viewport = document.createElement("div"); viewport.className = "carousel-viewport";
+    var track = document.createElement("div"); track.className = "carousel-track"; track.setAttribute("aria-live", "off");
+    slides.forEach(function (s, n) {
+      s.setAttribute("role", "group");
+      s.setAttribute("aria-roledescription", "slide");
+      s.setAttribute("aria-label", (n + 1) + " of " + slides.length);
+      track.appendChild(s);
+    });
+    viewport.appendChild(track);
+    box.appendChild(viewport);
+    box.classList.add("is-carousel");
+    box.setAttribute("role", "region");
+    box.setAttribute("aria-roledescription", "carousel");
+
+    var controls = document.createElement("div"); controls.className = "carousel-controls";
+    var prev = document.createElement("button"); prev.type = "button"; prev.className = "carousel-btn"; prev.setAttribute("aria-label", "Previous review"); prev.innerHTML = arrow("M15 18l-6-6 6-6");
+    var next = document.createElement("button"); next.type = "button"; next.className = "carousel-btn"; next.setAttribute("aria-label", "Next review"); next.innerHTML = arrow("M9 18l6-6-6-6");
+    var dots = document.createElement("div"); dots.className = "carousel-dots";
+    var dotBtns = slides.map(function (s, n) {
+      var b = document.createElement("button"); b.type = "button"; b.className = "carousel-dot";
+      b.setAttribute("aria-label", "Show review " + (n + 1));
+      b.addEventListener("click", function () { go(n, true); });
+      dots.appendChild(b); return b;
+    });
+    var pause = document.createElement("button"); pause.type = "button"; pause.className = "carousel-btn carousel-pause";
+    controls.appendChild(prev); controls.appendChild(dots); controls.appendChild(next); controls.appendChild(pause);
+    box.appendChild(controls);
+
+    function paintPause() {
+      pause.setAttribute("aria-label", stopped ? "Play reviews" : "Pause reviews");
+      pause.innerHTML = stopped ? arrow("M8 5l11 7-11 7z") : arrow("M9 5v14M15 5v14");
+    }
+    function go(n, byUser) {
+      var len = slides.length;
+      i = (n + len) % len;
+      slides.forEach(function (s, k) {
+        var on = k === i;
+        s.classList.toggle("is-active", on);
+        s.classList.toggle("is-prev", k === (i - 1 + len) % len);
+        s.classList.toggle("is-next", k === (i + 1) % len);
+        s.setAttribute("aria-hidden", on ? "false" : "true");
+      });
+      dotBtns.forEach(function (b, k) { b.setAttribute("aria-current", k === i ? "true" : "false"); });
+      if (byUser) { track.setAttribute("aria-live", "polite"); restart(); }
+    }
+    function tick() { if (!hold && !stopped && seen && !document.hidden) go(i + 1, false); }
+    function restart() { clearInterval(timer); timer = setInterval(tick, DELAY); }
+
+    slides.forEach(function (s, k) { s.addEventListener("click", function () { if (k !== i) go(k, true); }); });
+    prev.addEventListener("click", function () { go(i - 1, true); });
+    next.addEventListener("click", function () { go(i + 1, true); });
+    pause.addEventListener("click", function () { stopped = !stopped; paintPause(); restart(); });
+
+    box.addEventListener("mouseenter", function () { hold++; });
+    box.addEventListener("mouseleave", function () { hold = Math.max(0, hold - 1); restart(); });
+    box.addEventListener("focusin", function () { if (!box.dataset.focus) { hold++; box.dataset.focus = "1"; } });
+    box.addEventListener("focusout", function (e) {
+      if (!box.contains(e.relatedTarget) && box.dataset.focus) { hold = Math.max(0, hold - 1); delete box.dataset.focus; restart(); }
+    });
+
+    var x0 = null, y0 = 0;
+    viewport.addEventListener("touchstart", function (e) { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; hold++; }, { passive: true });
+    viewport.addEventListener("touchend", function (e) {
+      hold = Math.max(0, hold - 1);
+      if (x0 === null) return;
+      var dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+      x0 = null;
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) go(i + (dx < 0 ? 1 : -1), true); else restart();
+    }, { passive: true });
+    viewport.addEventListener("touchcancel", function () { x0 = null; hold = Math.max(0, hold - 1); });
+
+    if ("IntersectionObserver" in window) new IntersectionObserver(function (es) { seen = es[0].isIntersecting; }).observe(box);
+    paintPause();
+    go(0, false);
+    restart();
+  });
+
+  // Food photo slider: the row swipes and scrolls on its own; this adds arrows and, unless reduced motion is on,
+  // a slow auto-advance that pauses on hover, focus or touch and has its own pause button.
+  document.querySelectorAll("[data-slider]").forEach(function (box) {
+    var track = box.querySelector(".slider-track");
+    if (!track || track.children.length < 2) return;
+    var timer = null, hold = 0, stopped = reduce, seen = true;
+    var controls = document.createElement("div"); controls.className = "carousel-controls";
+    var prev = document.createElement("button"); prev.type = "button"; prev.className = "carousel-btn"; prev.setAttribute("aria-label", "Previous photos"); prev.innerHTML = arrow("M15 18l-6-6 6-6");
+    var next = document.createElement("button"); next.type = "button"; next.className = "carousel-btn"; next.setAttribute("aria-label", "Next photos"); next.innerHTML = arrow("M9 18l6-6-6-6");
+    controls.appendChild(prev); controls.appendChild(next);
+    var pause = null;
+    if (!reduce) {
+      pause = document.createElement("button"); pause.type = "button"; pause.className = "carousel-btn carousel-pause";
+      controls.appendChild(pause);
+    }
+    box.appendChild(controls);
+
+    function step() { var li = track.children[0]; return li.getBoundingClientRect().width + parseFloat(getComputedStyle(track).columnGap || 16); }
+    function atEnd() { return track.scrollLeft + track.clientWidth >= track.scrollWidth - 4; }
+    function move(dir) {
+      if (dir > 0 && atEnd()) track.scrollTo({ left: 0, behavior: reduce ? "auto" : "smooth" });
+      else if (dir < 0 && track.scrollLeft <= 4) track.scrollTo({ left: track.scrollWidth, behavior: reduce ? "auto" : "smooth" });
+      else track.scrollBy({ left: dir * step(), behavior: reduce ? "auto" : "smooth" });
+    }
+    function paintPause() {
+      if (!pause) return;
+      pause.setAttribute("aria-label", stopped ? "Play photos" : "Pause photos");
+      pause.innerHTML = stopped ? arrow("M8 5l11 7-11 7z") : arrow("M9 5v14M15 5v14");
+    }
+    function tick() { if (!hold && !stopped && seen && !document.hidden) move(1); }
+    function restart() { clearInterval(timer); if (!reduce) timer = setInterval(tick, 4000); }
+
+    prev.addEventListener("click", function () { move(-1); restart(); });
+    next.addEventListener("click", function () { move(1); restart(); });
+    if (pause) pause.addEventListener("click", function () { stopped = !stopped; paintPause(); restart(); });
+    box.addEventListener("mouseenter", function () { hold++; });
+    box.addEventListener("mouseleave", function () { hold = Math.max(0, hold - 1); restart(); });
+    box.addEventListener("focusin", function () { if (!box.dataset.focus) { hold++; box.dataset.focus = "1"; } });
+    box.addEventListener("focusout", function (e) {
+      if (!box.contains(e.relatedTarget) && box.dataset.focus) { hold = Math.max(0, hold - 1); delete box.dataset.focus; restart(); }
+    });
+    track.addEventListener("touchstart", function () { hold++; }, { passive: true });
+    track.addEventListener("touchend", function () { hold = Math.max(0, hold - 1); restart(); }, { passive: true });
+    track.addEventListener("touchcancel", function () { hold = Math.max(0, hold - 1); }, { passive: true });
+    if ("IntersectionObserver" in window) new IntersectionObserver(function (es) { seen = es[0].isIntersecting; }).observe(box);
+    paintPause();
+    restart();
+  });
 
   document.querySelectorAll("[data-year]").forEach(function (el) { el.textContent = new Date().getFullYear(); });
 })();

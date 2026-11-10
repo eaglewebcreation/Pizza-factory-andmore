@@ -339,3 +339,70 @@ body::before {
 
 :focus-visible { outline: 3px solid var(--red); outline-offset: 3px; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+/* Today's pick: one menu item per weekday, set by site.js */
+.pick-band { padding-block: clamp(28px, 5vw, 44px) 0; }
+.pick { display: grid; grid-template-columns: auto 1fr auto; gap: 18px 24px; align-items: center; background: var(--red-wash); border: 2px solid var(--ink); border-radius: var(--radius); padding: 16px 22px 16px 16px; box-shadow: 6px 6px 0 var(--red); }
+.pick img { width: 96px; height: 96px; object-fit: cover; border-radius: 8px; border: 2px solid var(--ink); }
+.pick-copy { display: grid; gap: 4px; min-width: 0; }
+.pick-copy h2 { font-size: clamp(1.25rem, 2.6vw, 1.6rem); }
+.pick-copy p { color: var(--ink-soft); font-size: .97rem; }
+.pick-price { font-family: var(--label); font-weight: 700; letter-spacing: .12em; color: var(--red); font-size: .85rem; text-transform: uppercase; }
+@media (max-width: 640px) {
+  .pick { grid-template-columns: auto 1fr; padding: 14px; }
+  .pick img { width: 76px; height: 76px; }
+  .pick .btn { grid-column: 1 / -1; justify-self: start; }
+}
+
+/* Food photo slider: swipeable row, arrows and gentle auto-advance added by site.js */
+.slider { position: relative; }
+.slider-track { display: grid; grid-auto-flow: column; grid-auto-columns: calc((100% - 3 * 16px) / 4); gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; scrollbar-width: none; padding: 4px 4px 12px; margin: 0; list-style: none; }
+.slider-track::-webkit-scrollbar { display: none; }
+.slider-track li { scroll-snap-align: start; margin: 0; }
+.slider-track figure { margin: 0; }
+.slider-track img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--radius); border: 2px solid var(--ink); background: var(--flour); }
+.slider-track figcaption { font-size: .9rem; color: var(--ink-soft); margin-top: 8px; }
+@media (max-width: 860px) { .slider-track { grid-auto-columns: calc((100% - 2 * 16px) / 3); } }
+@media (max-width: 560px) { .slider-track { grid-auto-columns: 72%; gap: 12px; } }
+
+/* Shared carousel controls */
+.carousel-controls { display: flex; align-items: center; gap: 14px; margin-top: 18px; }
+.carousel-btn { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--ink); background: var(--paper); color: var(--ink); display: grid; place-items: center; cursor: pointer; padding: 0; flex: none; }
+.carousel-btn:hover { background: var(--ink); color: var(--paper); }
+.carousel-btn svg { width: 20px; height: 20px; }
+.carousel-dots { display: flex; flex-wrap: wrap; justify-content: center; }
+.carousel-dot { width: 28px; height: 28px; border: 0; background: none; padding: 0; cursor: pointer; display: grid; place-items: center; }
+.carousel-dot::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--line); border: 2px solid var(--ink); }
+.carousel-dot[aria-current="true"]::before { background: var(--red); border-color: var(--red); }
+.carousel-pause { margin-left: auto; }
+
+/* Reviews coverflow: current review front and center, the previous and next set back to the sides */
+.quotes.is-carousel { display: block; }
+.carousel-viewport { position: relative; overflow: hidden; padding: 14px 0 22px; perspective: 1400px; touch-action: pan-y; }
+.carousel-track { display: grid; justify-items: center; align-items: center; transform-style: preserve-3d; }
+.carousel-track .quote { grid-area: 1 / 1; width: min(460px, 78%); transition: transform .6s ease, opacity .6s ease, filter .6s ease; transform: translateX(0) scale(.7); opacity: 0; z-index: 1; pointer-events: none; box-shadow: 0 14px 30px rgba(22,18,18,.16); }
+.carousel-track .quote.is-active { transform: translateX(0) scale(1); opacity: 1; z-index: 3; pointer-events: auto; box-shadow: 6px 6px 0 var(--red); }
+.carousel-track .quote.is-prev, .carousel-track .quote.is-next { opacity: .55; z-index: 2; pointer-events: auto; cursor: pointer; filter: saturate(.6); }
+.carousel-track .quote.is-prev { transform: translateX(-62%) scale(.82) rotateY(22deg); }
+.carousel-track .quote.is-next { transform: translateX(62%) scale(.82) rotateY(-22deg); }
+.reviews-more { margin-top: 22px; }
+
+/* Call and directions bar, phones only */
+.callbar { display: none; }
+@media (max-width: 760px) {
+  .carousel-track .quote { width: 84%; padding: 18px; }
+  .carousel-track .quote.is-prev { transform: translateX(-58%) scale(.8) rotateY(20deg); }
+  .carousel-track .quote.is-next { transform: translateX(58%) scale(.8) rotateY(-20deg); }
+  .carousel-controls { gap: 6px; flex-wrap: wrap; }
+  .carousel-btn { width: 40px; height: 40px; }
+  .carousel-dot { width: 22px; }
+
+  .callbar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)); background: var(--ink); border-top: 3px solid var(--red); box-shadow: 0 -6px 18px rgba(0,0,0,.25); }
+  .callbar .btn { min-height: 48px; padding: 0 12px; box-shadow: none; }
+  .callbar .btn svg { width: 18px; height: 18px; flex: none; }
+  body { padding-bottom: calc(74px + env(safe-area-inset-bottom, 0px)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .slider-track { scroll-behavior: auto; }
+  .carousel-track .quote { transition: none; }
+}

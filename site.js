@@ -1,4 +1,4 @@
-/* The Pizza Factory & More: open-now status, the online ordering switch, today's pick and the reviews carousel */
+/* The Pizza Factory & More: open-now status, the online ordering switch, today's pick and the carousels */
 (function () {
   // Paste the online ordering link here once it's set up (for example the Square Online ordering page).
   // Every "Order online" button then goes straight to it.
@@ -77,12 +77,16 @@
     set("[data-pick-link]", function (el) { el.href = "/menu" + p.link; });
   }
 
-  // Reviews carousel: current review front and center, previous and next set back to the sides. Rotates every 6 seconds,
+  // Coverflow carousel: current slide front and center, previous and next set back to the sides. Rotates every 6 seconds,
   // pauses on hover, focus or touch, swipes on phones. People who ask for reduced motion keep the plain grid.
-  document.querySelectorAll("[data-carousel]").forEach(function (box) {
-    var slides = Array.prototype.slice.call(box.querySelectorAll(".quote"));
-    if (reduce || slides.length < 2) return;
-    var DELAY = 6000, i = 0, timer = null, hold = 0, stopped = false, seen = true;
+  // data-carousel-item picks the slides (reviews by default), data-carousel-noun names them for screen readers,
+  // and data-carousel-max turns the carousel on only at or below that width (phones), keeping the grid above it.
+  function carousel(box) {
+    var slides = Array.prototype.slice.call(box.querySelectorAll(box.getAttribute("data-carousel-item") || ".quote"));
+    if (slides.length < 2) return null;
+    var noun = box.getAttribute("data-carousel-noun") || "review";
+    var DELAY = 6000, i = 0, timer = null, hold = 0, stopped = false, seen = true, io = null, offs = [];
+    function on(el, ev, fn, opt) { el.addEventListener(ev, fn, opt); offs.push(function () { el.removeEventListener(ev, fn, opt); }); }
 
     var viewport = document.createElement("div"); viewport.className = "carousel-viewport";
     var track = document.createElement("div"); track.className = "carousel-track"; track.setAttribute("aria-live", "off");
@@ -99,12 +103,12 @@
     box.setAttribute("aria-roledescription", "carousel");
 
     var controls = document.createElement("div"); controls.className = "carousel-controls";
-    var prev = document.createElement("button"); prev.type = "button"; prev.className = "carousel-btn"; prev.setAttribute("aria-label", "Previous review"); prev.innerHTML = arrow("M15 18l-6-6 6-6");
-    var next = document.createElement("button"); next.type = "button"; next.className = "carousel-btn"; next.setAttribute("aria-label", "Next review"); next.innerHTML = arrow("M9 18l6-6-6-6");
+    var prev = document.createElement("button"); prev.type = "button"; prev.className = "carousel-btn"; prev.setAttribute("aria-label", "Previous " + noun); prev.innerHTML = arrow("M15 18l-6-6 6-6");
+    var next = document.createElement("button"); next.type = "button"; next.className = "carousel-btn"; next.setAttribute("aria-label", "Next " + noun); next.innerHTML = arrow("M9 18l6-6-6-6");
     var dots = document.createElement("div"); dots.className = "carousel-dots";
     var dotBtns = slides.map(function (s, n) {
       var b = document.createElement("button"); b.type = "button"; b.className = "carousel-dot";
-      b.setAttribute("aria-label", "Show review " + (n + 1));
+      b.setAttribute("aria-label", "Show " + noun + " " + (n + 1));
       b.addEventListener("click", function () { go(n, true); });
       dots.appendChild(b); return b;
     });
@@ -113,18 +117,19 @@
     box.appendChild(controls);
 
     function paintPause() {
-      pause.setAttribute("aria-label", stopped ? "Play reviews" : "Pause reviews");
+      pause.setAttribute("aria-label", stopped ? "Play " + noun + "s" : "Pause " + noun + "s");
       pause.innerHTML = stopped ? arrow("M8 5l11 7-11 7z") : arrow("M9 5v14M15 5v14");
     }
     function go(n, byUser) {
       var len = slides.length;
       i = (n + len) % len;
       slides.forEach(function (s, k) {
-        var on = k === i;
-        s.classList.toggle("is-active", on);
+        var cur = k === i;
+        s.classList.toggle("is-active", cur);
         s.classList.toggle("is-prev", k === (i - 1 + len) % len);
         s.classList.toggle("is-next", k === (i + 1) % len);
-        s.setAttribute("aria-hidden", on ? "false" : "true");
+        s.setAttribute("aria-hidden", cur ? "false" : "true");
+        if (s.tagName === "A") { if (cur) s.removeAttribute("tabindex"); else s.setAttribute("tabindex", "-1"); }
       });
       dotBtns.forEach(function (b, k) { b.setAttribute("aria-current", k === i ? "true" : "false"); });
       if (byUser) { track.setAttribute("aria-live", "polite"); restart(); }
@@ -132,15 +137,16 @@
     function tick() { if (!hold && !stopped && seen && !document.hidden) go(i + 1, false); }
     function restart() { clearInterval(timer); timer = setInterval(tick, DELAY); }
 
-    slides.forEach(function (s, k) { s.addEventListener("click", function () { if (k !== i) go(k, true); }); });
+    // A tap on a side slide brings it to the front instead of following its link.
+    slides.forEach(function (s, k) { on(s, "click", function (e) { if (k !== i) { e.preventDefault(); go(k, true); } }); });
     prev.addEventListener("click", function () { go(i - 1, true); });
     next.addEventListener("click", function () { go(i + 1, true); });
     pause.addEventListener("click", function () { stopped = !stopped; paintPause(); restart(); });
 
-    box.addEventListener("mouseenter", function () { hold++; });
-    box.addEventListener("mouseleave", function () { hold = Math.max(0, hold - 1); restart(); });
-    box.addEventListener("focusin", function () { if (!box.dataset.focus) { hold++; box.dataset.focus = "1"; } });
-    box.addEventListener("focusout", function (e) {
+    on(box, "mouseenter", function () { hold++; });
+    on(box, "mouseleave", function () { hold = Math.max(0, hold - 1); restart(); });
+    on(box, "focusin", function () { if (!box.dataset.focus) { hold++; box.dataset.focus = "1"; } });
+    on(box, "focusout", function (e) {
       if (!box.contains(e.relatedTarget) && box.dataset.focus) { hold = Math.max(0, hold - 1); delete box.dataset.focus; restart(); }
     });
 
@@ -155,10 +161,38 @@
     }, { passive: true });
     viewport.addEventListener("touchcancel", function () { x0 = null; hold = Math.max(0, hold - 1); });
 
-    if ("IntersectionObserver" in window) new IntersectionObserver(function (es) { seen = es[0].isIntersecting; }).observe(box);
+    if ("IntersectionObserver" in window) { io = new IntersectionObserver(function (es) { seen = es[0].isIntersecting; }); io.observe(box); }
     paintPause();
     go(0, false);
     restart();
+
+    // Undo everything, for when a phone-only carousel is turned back into the grid (a rotated tablet or a resized window).
+    return function () {
+      clearInterval(timer);
+      if (io) io.disconnect();
+      offs.forEach(function (f) { f(); });
+      slides.forEach(function (s) {
+        ["role", "aria-roledescription", "aria-label", "aria-hidden", "tabindex"].forEach(function (a) { s.removeAttribute(a); });
+        s.classList.remove("is-active", "is-prev", "is-next");
+        box.insertBefore(s, viewport);
+      });
+      viewport.remove(); controls.remove();
+      box.classList.remove("is-carousel");
+      box.removeAttribute("role"); box.removeAttribute("aria-roledescription");
+      delete box.dataset.focus;
+    };
+  }
+
+  if (!reduce) document.querySelectorAll("[data-carousel]").forEach(function (box) {
+    var max = box.getAttribute("data-carousel-max");
+    if (!max || !window.matchMedia) { carousel(box); return; }
+    var mq = window.matchMedia("(max-width: " + max + "px)"), undo = null;
+    function apply() {
+      if (mq.matches && !undo) undo = carousel(box);
+      else if (!mq.matches && undo) { undo(); undo = null; }
+    }
+    if (mq.addEventListener) mq.addEventListener("change", apply); else if (mq.addListener) mq.addListener(apply);
+    apply();
   });
 
   document.querySelectorAll("[data-year]").forEach(function (el) { el.textContent = new Date().getFullYear(); });

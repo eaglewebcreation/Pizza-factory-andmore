@@ -370,22 +370,23 @@ body::before {
 .carousel-pause { margin-left: auto; }
 
 /* Reviews coverflow: current review front and center, the previous and next set back to the sides */
-.quotes.is-carousel { display: block; }
+.quotes.is-carousel, .cards.is-carousel { display: block; }
 .carousel-viewport { position: relative; overflow: hidden; padding: 14px 0 22px; perspective: 1400px; touch-action: pan-y; }
 .carousel-track { display: grid; justify-items: center; align-items: center; transform-style: preserve-3d; }
-.carousel-track .quote { grid-area: 1 / 1; width: min(460px, 78%); transition: transform .6s ease, opacity .6s ease, filter .6s ease; transform: translateX(0) scale(.7); opacity: 0; z-index: 1; pointer-events: none; box-shadow: 0 14px 30px rgba(22,18,18,.16); }
-.carousel-track .quote.is-active { transform: translateX(0) scale(1); opacity: 1; z-index: 3; pointer-events: auto; box-shadow: 6px 6px 0 var(--red); }
-.carousel-track .quote.is-prev, .carousel-track .quote.is-next { opacity: .55; z-index: 2; pointer-events: auto; cursor: pointer; filter: saturate(.6); }
-.carousel-track .quote.is-prev { transform: translateX(-62%) scale(.82) rotateY(22deg); }
-.carousel-track .quote.is-next { transform: translateX(62%) scale(.82) rotateY(-22deg); }
+.carousel-track > * { grid-area: 1 / 1; width: min(460px, 78%); transition: transform .6s ease, opacity .6s ease, filter .6s ease; transform: translateX(0) scale(.7); opacity: 0; z-index: 1; pointer-events: none; box-shadow: 0 14px 30px rgba(22,18,18,.16); }
+.carousel-track > .is-active { transform: translateX(0) scale(1); opacity: 1; z-index: 3; pointer-events: auto; box-shadow: 6px 6px 0 var(--red); }
+.carousel-track > .is-prev, .carousel-track > .is-next { opacity: .55; z-index: 2; pointer-events: auto; cursor: pointer; filter: saturate(.6); }
+.carousel-track > .is-prev { transform: translateX(-62%) scale(.82) rotateY(22deg); }
+.carousel-track > .is-next { transform: translateX(62%) scale(.82) rotateY(-22deg); }
 .reviews-more { margin-top: 22px; }
 
 /* Call and directions bar, phones only */
 .callbar { display: none; }
 @media (max-width: 760px) {
-  .carousel-track .quote { width: 84%; padding: 18px; }
-  .carousel-track .quote.is-prev { transform: translateX(-58%) scale(.8) rotateY(20deg); }
-  .carousel-track .quote.is-next { transform: translateX(58%) scale(.8) rotateY(-20deg); }
+  .carousel-track > * { width: 84%; }
+  .carousel-track .quote { padding: 18px; }
+  .carousel-track > .is-prev { transform: translateX(-58%) scale(.8) rotateY(20deg); }
+  .carousel-track > .is-next { transform: translateX(58%) scale(.8) rotateY(-20deg); }
   .carousel-controls { gap: 6px; flex-wrap: wrap; }
   .carousel-btn { width: 40px; height: 40px; }
   .carousel-dot { width: 22px; }
@@ -396,5 +397,5 @@ body::before {
   body { padding-bottom: calc(74px + env(safe-area-inset-bottom, 0px)); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .carousel-track .quote { transition: none; }
+  .carousel-track > * { transition: none; }
 }
